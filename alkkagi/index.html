@@ -66,8 +66,8 @@ import { Tween, Easing, update as TWEENUpdate } from 'https://cdn.jsdelivr.net/n
 
 /* OrbitControls: 카메라 회전/줌 컨트롤 */
 import { OrbitControls } from './js/OrbitControls.js';
-
 import { RGBELoader } from './js/RGBELoader.js';
+import { GLTFLoader } from './js/GLTFLoader.js';
 
 /* ====== 변수 선언 ====== */
 let scene, camera, renderer, world; // 씬, 카메라, 렌더러, 물리 월드
@@ -119,6 +119,23 @@ function init(){
       scene.environment = texture; // 모든 PBR 재질의 환경광 및 반사 맵으로 설정
     });
 
+    new GLTFLoader().load('./model.gltf', (gltf) => {
+        const table = gltf.scene;
+    
+        const scale = 20; // 모델 크기 조절
+        table.position.set(0, -21, 0); // 바둑판 아래에 위치
+        table.scale.set(scale, scale, scale); // 필요하면 크기 조절
+        scene.add(table);
+
+        // 그림자 설정 (옵션)
+        table.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+    });
+
     // 카메라 생성
     camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 100);
     camera.position.set(0,10,10); // 카메라 위치
@@ -144,11 +161,10 @@ function init(){
     const textureLoader = new THREE.TextureLoader();
     const groundTexture = textureLoader.load('./wood3.jpg'); // wood.jpg 텍스처 로드
     const gMesh = new THREE.Mesh(
-        new THREE.BoxGeometry(boardSize, 5, boardSize),
+        new THREE.BoxGeometry(boardSize, 1, boardSize),
         new THREE.MeshStandardMaterial({map: groundTexture, roughness:0.5, metalness:0.1}) // map 속성에 텍스처 적용
-        // new THREE.MeshStandardMaterial({color:0xdeb887, roughness:0.9, metalness:0})
     );
-    gMesh.position.set(0, -2.5,0);
+    gMesh.position.set(0, -0.5,0);
     scene.add(gMesh);
 
     // Cannon.js 바닥 물리
@@ -180,11 +196,11 @@ function init(){
         let x = -halfSize + j * step;
         positions.push(x,0.01,-halfSize, x,0.01,halfSize);
     }
-    lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions,3));
+    lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     scene.add(new THREE.LineSegments(lineGeo,lineMat));
 
     // ====== 조명 ======
-    const light = new THREE.DirectionalLight(0xffffff,3.5); 
+    const light = new THREE.DirectionalLight(0xffffff,2.5); 
     light.position.set(10,20,10); 
     scene.add(light);
     scene.add(new THREE.AmbientLight(0x888888)); // 환경광
