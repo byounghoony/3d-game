@@ -67,6 +67,8 @@ import { Tween, Easing, update as TWEENUpdate } from 'https://cdn.jsdelivr.net/n
 /* OrbitControls: 카메라 회전/줌 컨트롤 */
 import { OrbitControls } from './js/OrbitControls.js';
 
+import { RGBELoader } from './js/RGBELoader.js';
+
 /* ====== 변수 선언 ====== */
 let scene, camera, renderer, world; // 씬, 카메라, 렌더러, 물리 월드
 let stones = [], selectedStone = null; // 돌 배열, 선택된 돌
@@ -82,6 +84,7 @@ let controls; // OrbitControls
 let scores = [0,0]; // 점수
 let lastTime; // 물리 엔진 업데이트용
 const boardSize = 18; // 바둑판 크기
+const halfSize = (boardSize - 1)/2;
 
 /* ====== UI 요소 가져오기 ====== */
 const p1Input = document.getElementById('p1');
@@ -110,6 +113,12 @@ function init(){
     scene = new THREE.Scene(); 
     scene.background = new THREE.Color(0x87CEEB); // 하늘색
 
+    new RGBELoader().load('./hdr/space.hdr', (texture) => {
+      texture.mapping = THREE.EquirectangularReflectionMapping;
+      scene.background = texture; // 씬의 배경으로 설정
+      scene.environment = texture; // 모든 PBR 재질의 환경광 및 반사 맵으로 설정
+    });
+
     // 카메라 생성
     camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 100);
     camera.position.set(0,10,10); // 카메라 위치
@@ -132,11 +141,14 @@ function init(){
     world.solver.iterations = 300; // 물리 계산 반복 횟수 (정확도 향상)
 
     // Three.js 바닥 메쉬
+    const textureLoader = new THREE.TextureLoader();
+    const groundTexture = textureLoader.load('./wood3.jpg'); // wood.jpg 텍스처 로드
     const gMesh = new THREE.Mesh(
-        new THREE.BoxGeometry(boardSize, 0.2, boardSize),
-        new THREE.MeshStandardMaterial({color:0xdeb887, roughness:0.9, metalness:0})
+        new THREE.BoxGeometry(boardSize, 5, boardSize),
+        new THREE.MeshStandardMaterial({map: groundTexture, roughness:0.5, metalness:0.1}) // map 속성에 텍스처 적용
+        // new THREE.MeshStandardMaterial({color:0xdeb887, roughness:0.9, metalness:0})
     );
-    gMesh.position.set(0,-0.1,0);
+    gMesh.position.set(0, -2.5,0);
     scene.add(gMesh);
 
     // Cannon.js 바닥 물리
@@ -150,24 +162,29 @@ function init(){
     world.addBody(groundBody);
 
     // ====== 바둑판 선 그리기 ======
-    const lineMat = new THREE.LineBasicMaterial({color:0x000}); // 선 색
+    const lineMat = new THREE.LineBasicMaterial({color:0x000, linewidth: 2}); // 선 색 및 두께 설정
     const lineGeo = new THREE.BufferGeometry(); // 선 지오메트리
     const positions=[];
-    const halfSize = boardSize/2;
+
+    const count = (halfSize * 2);   // 원래 간격 수
+    const step = (halfSize * 2) / (count + 1); // 새 간격 (한 줄 더 추가)
 
     // 가로선
-    for(let i=-halfSize;i<=halfSize;i++){ 
-        positions.push(-halfSize,0.01,i, halfSize,0.01,i); 
+    for(let i=0; i<=count+1; i++){ 
+        let z = -halfSize + i * step;
+        positions.push(-halfSize,0.01,z, halfSize,0.01,z);
     }
+
     // 세로선
-    for(let j=-halfSize;j<=halfSize;j++){ 
-        positions.push(j,0.01,-halfSize, j,0.01,halfSize); 
+    for(let j=0; j<=count+1; j++){ 
+        let x = -halfSize + j * step;
+        positions.push(x,0.01,-halfSize, x,0.01,halfSize);
     }
     lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions,3));
     scene.add(new THREE.LineSegments(lineGeo,lineMat));
 
     // ====== 조명 ======
-    const light = new THREE.DirectionalLight(0xffffff,1); 
+    const light = new THREE.DirectionalLight(0xffffff,3.5); 
     light.position.set(10,20,10); 
     scene.add(light);
     scene.add(new THREE.AmbientLight(0x888888)); // 환경광
@@ -222,7 +239,7 @@ function createStones(){
     // 돌과 돌의 상호작용 설정
     world.addContactMaterial(new CANNON.ContactMaterial(stoneMat, stoneMat, { friction: 0.01, restitution: 1 }));
 
-    const count=8, spacing=2, halfSize=9; // 돌 개수, 간격
+    const count=8, spacing=1.9; // 돌 개수, 간격
     const positions=[ {xStart:-halfSize+1,playerIndex:0}, {xStart:halfSize-1,playerIndex:1} ]; // 양쪽 플레이어 시작 위치
 
     positions.forEach(p=>{
@@ -231,19 +248,19 @@ function createStones(){
 
         for(let i=0;i<count;i++){
             const x = xStart;
-            const z = (i-(count-1)/2)*spacing;
+            const z = (i - (count - 1) / 2) * spacing;
 
             // Three.js 돌 메쉬
             const geo = new THREE.SphereGeometry(stoneRadius,32,32);
             geo.scale(1,0.4,1); // 약간 납작하게
-            const mesh = new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:color, roughness:0.3, metalness:0.6, emissive:0x000}));
+            const mesh = new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:color, roughness:0.3, metalness:0.1, emissive:0x000}));
             mesh.position.set(x, 0.1, z); // 바닥에 붙도록 y 위치 조정
             scene.add(mesh);
 
             // Cannon.js 돌 물리
             const body = new CANNON.Cylinder(stoneRadius,stoneRadius,stoneRadius*0.4,16);
             const cannonBody = new CANNON.Body({
-                mass:1, // 무게
+                mass:0.8, // 무게
                 shape:body,
                 position:new CANNON.Vec3(x, 0.1, z), // 바닥에 붙도록 y 위치 조정
                 material:stoneMat,
