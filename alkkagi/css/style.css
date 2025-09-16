@@ -1,0 +1,10 @@
+body { margin:0; overflow:hidden; font-family:sans-serif; }
+#ui { position:absolute; top:10px; left:10px; z-index:10; }
+#turn { margin-top:10px; font-weight:bold; }
+#info { margin-top:5px; }
+#score { margin-top:5px; font-weight:bold; }
+#chargeBarContainer { position: absolute; width: 100px; height: 15px; background: #555; border: 1px solid #fff; display: none; };
+#chargeBar { width:0%; height:100%; background:#f00; border-radius:5px; }
+#minimap { position:absolute; top:10px; right:10px; width:200px; height:200px; border:2px solid #000; }
+button { margin:5px; padding:5px 10px; }
+#winner { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:24px; font-weight:bold; display:none; background:rgba(255,255,255,0.8); padding:10px; border-radius:10px; };
