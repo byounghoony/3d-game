@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>3D 게이트볼</title>
+<style>
+/* 기본 화면 스타일 설정 */
+body { margin:0; overflow:hidden; font-family:sans-serif; }
+
+/* UI 영역 위치와 스타일 */
+#ui { position:absolute; top:10px; left:10px; z-index:10; }
+#turn { margin-top:10px; font-weight:bold; }
+#info { margin-top:5px; }
+#spark-info { margin-top:5px; color: #ffeb3b; font-weight: bold; }
+#turns-left { margin-top:5px; font-weight:bold; font-size: 18px; color: #ffc107; }
+#score { margin-top:5px; font-weight:bold; }
+
+/* 게이지 바 컨테이너 숨김 상태 */
+#chargeBarContainer {
+    position: absolute; /* 화면상에 자유롭게 위치 */
+    width: 100px;
+    height: 15px;
+    background: #555;
+    border: 1px solid #fff;
+    display: none; /* 초기에는 숨김 */
+}
+#chargeBar { width:0%; height:100%; background:#f00; border-radius:5px; }
+
+/* 미니맵 캔버스 위치 */
+#minimap { position:absolute; top:10px; right:10px; width:200px; height:200px; border:2px solid #000; }
+
+/* 버튼 기본 스타일 */
+button { margin:5px; padding:5px 10px; }
+
+/* 승리 표시 영역 숨김 상태 */
+#winner { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:24px; font-weight:bold; display:none; background:rgba(255,255,255,0.8); padding:10px; border-radius:10px; }
+</style>
+</head>
+<body>
+<!-- UI 영역 -->
+<div id="ui">
+  <button id="startBtn">게임 시작</button>
+  <div id="turn"></div>
+  <div id="turns-left"></div>
+  <div id="spark-info"></div>
+  <div id="info"></div>
+  <div id="score"></div>
+  <div id="chargeBarContainer"><div id="chargeBar"></div></div>
+  <button id="chargeBtn" disabled>치기 준비</button>
+  <button id="hitBtn" disabled>치기!</button>
+</div>
+
+<!-- 미니맵 캔버스 -->
+<canvas id="minimap"></canvas>
+
+<!-- 승리 메시지 영역 -->
+<div id="winner"></div>
+
+<script type="module">
+/* Three.js 모듈 임포트: 3D 그래픽 처리 */
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+/* Cannon-es 모듈 임포트: 물리 엔진 */
+import * as CANNON from 'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js';
+
+/* Tween.js 모듈 임포트: 애니메이션/보간 처리 */
+import { Tween, Easing, update as TWEENUpdate } from 'https://cdn.jsdelivr.net/npm/@tweenjs/tween.js@18.6.4/dist/tween.esm.js';
+
+/* OrbitControls: 카메라 회전/줌 컨트롤 */
+import { OrbitControls } from './js/three/OrbitControls.js';
+import { RGBELoader } from './js/three/RGBELoader.js';
+import { GLTFLoader } from './js/three/GLTFLoader.js';
+
+/* ====== 변수 선언 ====== */
+let scene, camera, renderer, world; // 씬, 카메라, 렌더러, 물리 월드
+let balls = [], selectedBall = null; // 공 배열, 선택된 공
+let gates = [], goalPole, gateColliders = [], gateBodies = []; // 게이트, 골폴, 게이트 충돌/감지용
+let teams = []; // 팀 정보, 터치 정보
+let turn = 0, chargePower = 0, charging = false; // 턴, 게이지, 충전상태
+const ballRadius = 0.3; // 공 반지름
+let isTurnPlaying = false, hasAnotherTurn = false; // 현재 턴 진행 여부, 추가 턴 여부
+let raycaster, mouse; // 마우스 클릭 처리
+let miniRenderer, miniCamera; // 미니맵 렌더러, 카메라
+let initialBallPosition; // 공의 최초 시작 위치 저장용
+let isFirstShot = true; // 첫 타격인지 확인하는 변수
+let tween; // Tween.js 객체
+let arrowHelper; // 발사 방향을 보여주는 화살표
+let controls; // OrbitControls
+let scores = [0, 0]; // 점수
+const MAX_TURNS = 10; // 최대 턴 수
+let turnsLeft = MAX_TURNS; // 남은 턴 수
+let lastTime; // 물리 엔진 업데이트용
+const boardWidth = 30; // 경기장 너비
+const boardLength = 40; // 경기장 길이
+const halfWidth = boardWidth / 2;
+const halfLength = boardLength / 2;
+const outerGroundWidth = boardWidth + 5;
+const outerGroundLength = boardLength + 5;
+
+
+/* ====== UI 요소 가져오기 ====== */
+const startBtn = document.getElementById('startBtn');
+const turnDiv = document.getElementById('turn');
+const turnsLeftDiv = document.getElementById('turns-left');
+const sparkInfoDiv = document.getElementById('spark-info');
+const infoDiv = document.getElementById('info');
+const scoreDiv = document.getElementById('score');
+const chargeBtn = document.getElementById('chargeBtn');
+const hitBtn = document.getElementById('hitBtn');
+const winnerDiv = document.getElementById('winner');
+const chargeBarContainer = document.getElementById('chargeBarContainer');
+const chargeBar = document.getElementById('chargeBar');
+
+/* ====== 초기화 함수 ====== */
+function init(){
+    // 씬 생성, 배경색
+    scene = new THREE.Scene(); 
+    scene.background = new THREE.Color(0x87CEEB); // 하늘색
+
+    new RGBELoader().load('./hdr/space.hdr', (texture) => {
+      texture.mapping = THREE.EquirectangularReflectionMapping;
+      scene.background = texture; // 씬의 배경으로 설정
+      scene.environment = texture; // 모든 PBR 재질의 환경광 및 반사 맵으로 설정
+    });
+
+    // 카메라 생성
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 35, 30); // 카메라 위치를 더 멀리 조정
+    camera.lookAt(0,0,0); // 카메라 타겟
+
+    // 렌더러 생성
+    renderer = new THREE.WebGLRenderer({antialias:true}); 
+    renderer.setSize(window.innerWidth, window.innerHeight); 
+    document.body.appendChild(renderer.domElement); // DOM에 붙이기
+
+    // OrbitControls 생성
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.saveState(); // 초기 카메라 상태 저장
+    controls.update();
+
+    // Cannon.js 물리 월드 생성
+    world = new CANNON.World({ gravity:new CANNON.Vec3(0, 0, 0) }); // 현실적인 중력 적용
+    world.broadphase = new CANNON.NaiveBroadphase(); // 충돌 체크 방식
+    world.solver.iterations = 300; // 물리 계산 반복 횟수 (정확도 향상)
+
+    // Three.js 바닥 메쉬
+    const textureLoader = new THREE.TextureLoader();
+    const groundTexture = textureLoader.load('./wood3.jpg'); // wood.jpg 텍스처 로드
+    const gMesh = new THREE.Mesh( 
+        new THREE.PlaneGeometry(boardWidth, boardLength), 
+        new THREE.MeshStandardMaterial({color: 0x93A362, roughness:0.9, metalness:0.1}) // 모래 색상
+    );
+    gMesh.rotation.x = -Math.PI / 2;
+    scene.add(gMesh);
+
+    // 경기장 외부 바닥
+    const outerGroundMesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(outerGroundWidth, outerGroundLength),
+        new THREE.MeshStandardMaterial({ color: 0xE65C5C, roughness: 0.9 }) // 어두운 녹색
+    );
+    outerGroundMesh.rotation.x = -Math.PI / 2;
+    outerGroundMesh.position.y = -0.05; // 경기장보다 살짝 아래에 위치
+    scene.add(outerGroundMesh);
+
+    // Cannon.js 바닥 물리
+    const groundBody = new CANNON.Body({
+        mass:0, // 고정
+        shape:new CANNON.Box(new CANNON.Vec3(outerGroundWidth / 2, 0.1, outerGroundLength / 2)),
+        material: new CANNON.Material('groundMat')
+    });
+    groundBody.position.set(0,-0.1,0); 
+    world.addBody(groundBody);
+
+    // 경기장 라인 생성
+    const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
+    const y = 0.01; // 바닥과 겹치지 않게 살짝 위로
+    const fieldPoints = [
+        new THREE.Vector3(-halfWidth, y, -halfLength), new THREE.Vector3(halfWidth, y, -halfLength),
+        new THREE.Vector3(halfWidth, y, -halfLength), new THREE.Vector3(halfWidth, y, halfLength),
+        new THREE.Vector3(halfWidth, y, halfLength), new THREE.Vector3(-halfWidth, y, halfLength),
+        new THREE.Vector3(-halfWidth, y, halfLength), new THREE.Vector3(-halfWidth, y, -halfLength)
+    ];
+    const startAreaPoints = [
+        new THREE.Vector3(halfWidth - 4, y, -halfLength), new THREE.Vector3(halfWidth, y, -halfLength),
+        new THREE.Vector3(halfWidth, y, -halfLength), new THREE.Vector3(halfWidth, y, -halfLength + 2),
+        new THREE.Vector3(halfWidth, y, -halfLength + 2), new THREE.Vector3(halfWidth - 4, y, -halfLength + 2),
+        new THREE.Vector3(halfWidth - 4, y, -halfLength + 2), new THREE.Vector3(halfWidth - 4, y, -halfLength)
+    ];
+
+    const points = fieldPoints.concat(startAreaPoints);
+
+    const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+    const fieldLines = new THREE.LineSegments(lineGeometry, lineMaterial);
+    scene.add(fieldLines);
+
+    // ====== 조명 ======
+    const light = new THREE.DirectionalLight(0xffffff,2.5); 
+    light.position.set(10,20,10); 
+    scene.add(light);
+    scene.add(new THREE.AmbientLight(0x888888)); // 환경광
+
+    // ====== 미니맵 ======
+    miniRenderer = new THREE.WebGLRenderer({canvas:document.getElementById('minimap'), antialias: true});
+    miniRenderer.setSize(200,200);
+
+    const largestHalfDim = Math.max(halfWidth, halfLength) + 2; // 여유 공간을 둠
+    miniCamera = new THREE.OrthographicCamera(-largestHalfDim, largestHalfDim, largestHalfDim, -largestHalfDim, 0, 50);
+    miniCamera.position.set(0,20,0); 
+    miniCamera.lookAt(0,0,0);
+
+    // ====== 마우스 처리 ======
+    raycaster = new THREE.Raycaster(); 
+    mouse = new THREE.Vector2();
+
+    // ====== 디버그용 화살표 ======
+    arrowHelper = new THREE.ArrowHelper(new THREE.Vector3(0,0,1), new THREE.Vector3(0,0,0), 3, 0xff0000);
+    arrowHelper.visible = false; // 처음에는 숨김
+    scene.add(arrowHelper);
+
+    // ====== 이벤트 ======
+    window.addEventListener('resize',onWindowResize); // 창 크기 변경 시
+    renderer.domElement.addEventListener('pointerdown',onPointerDown); // 클릭 이벤트
+}
+
+/* ====== 게임 시작 버튼 클릭 ====== */
+startBtn.addEventListener('click',()=>{
+    // 팀 정보 생성
+    teams=[
+        {color:0xff0000, lastPosition: null}
+    ];
+    startBtn.disabled=true; // 버튼 비활성화
+    createGameElements(); // 게임 요소 생성
+    updateTurnUI(); // UI 업데이트
+    chargeBtn.disabled=false; // 준비 버튼 활성화
+});
+/* ====== 게임 요소 생성 ====== */
+function createGate(position, rotationY, number) {
+    const gateMaterial = new THREE.MeshStandardMaterial({ color: 0xaaaaaa, metalness: 0.8, roughness: 0.2 });
+    const gateWidth = 2.2, gateHeight = 2;
+
+    // 'ㄷ'자 모양 경로 생성
+    const curve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-gateWidth / 2, 0, 0),
+        new THREE.Vector3(-gateWidth / 2, gateHeight, 0),
+        new THREE.Vector3(gateWidth / 2, gateHeight, 0),
+        new THREE.Vector3(gateWidth / 2, 0, 0)
+    ]);
+
+    const gateGeometry = new THREE.TubeGeometry(curve, 20, 0.1, 8, false);
+    const gateMesh = new THREE.Mesh(gateGeometry, gateMaterial);
+
+    // 게이트 번호 생성 (CanvasTexture 사용)
+    const canvas = document.createElement('canvas');
+    canvas.width = 128; canvas.height = 128;
+    const context = canvas.getContext('2d');
+    context.fillStyle = 'white';
+    context.fillRect(0, 0, 128, 128);
+    context.font = 'bold 80px Arial';
+    context.fillStyle = 'black';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(number.toString(), 64, 64);
+
+    const numberTexture = new THREE.CanvasTexture(canvas); 
+    const numberMaterial = new THREE.MeshBasicMaterial({ map: numberTexture, transparent: true });
+    const numberMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), numberMaterial);
+    numberMesh.position.set(0, gateHeight + 0.7, 0);
+
+    const group = new THREE.Group();
+    group.add(gateMesh);
+    group.add(numberMesh);
+    group.position.copy(position);
+    group.rotation.y = rotationY;
+    scene.add(group);
+
+    // 게이트 물리 바디 생성
+    const gateBody = new CANNON.Body({ mass: 0 }); // 고정된 객체
+    const tubeRadius = 0.1;
+    // 세 개의 박스로 'ㄷ'자 모양 근사
+    const topShape = new CANNON.Box(new CANNON.Vec3(gateWidth / 2, tubeRadius, tubeRadius));
+    const leftShape = new CANNON.Box(new CANNON.Vec3(tubeRadius, gateHeight / 2, tubeRadius));
+    const rightShape = new CANNON.Box(new CANNON.Vec3(tubeRadius, gateHeight / 2, tubeRadius));
+
+    gateBody.addShape(topShape, new CANNON.Vec3(0, gateHeight, 0));
+    gateBody.addShape(leftShape, new CANNON.Vec3(-gateWidth / 2, gateHeight / 2, 0));
+    gateBody.addShape(rightShape, new CANNON.Vec3(gateWidth / 2, gateHeight / 2, 0));
+
+    gateBody.position.copy(position);
+    gateBody.quaternion.setFromEuler(0, rotationY, 0);
+    world.addBody(gateBody);
+
+    return { group, body: gateBody, numberMesh: numberMesh };
+}
+
+function createGameElements() {
+    // 게이트 생성
+    gates.push(createGate(new THREE.Vector3(0, 0, -halfLength + 8), 0, 1));
+    gates.push(createGate(new THREE.Vector3(halfWidth - 8, 0, 0), Math.PI / 2, 2));
+    gates.push(createGate(new THREE.Vector3(-halfWidth + 8, 0, halfLength - 8), -Math.PI / 4, 3));
+    
+    gates.forEach(gateData => {
+        gateBodies.push(gateData.body);
+    });
+
+    // 게이트 통과 감지를 위한 보이지 않는 충돌체
+    gates.forEach((gateData, i) => {
+        const collider = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.1, 0.1), new THREE.MeshBasicMaterial({ visible: false }));
+        collider.position.copy(gateData.group.position); // 그룹의 위치 복사
+        collider.position.y = ballRadius;
+        collider.rotation.copy(gateData.group.rotation); // 그룹의 회전 복사
+        collider.userData.gateIndex = i;
+        scene.add(collider);
+        gateColliders.push(collider);
+    });
+
+    // 공 생성
+    const ballMat = new CANNON.Material('ballMat'); // 공 재질
+    const groundMaterial = world.bodies.find(b => b.material && b.material.name === 'groundMat').material; // 바닥 재질 가져오기
+
+    // 공과 바닥의 상호작용 설정
+    const ballGroundContact = new CANNON.ContactMaterial(ballMat, groundMaterial,{
+        friction: 0.4, restitution: 0.2 // 마찰력 증가, 반발력 조정
+    });
+    world.addContactMaterial(ballGroundContact);
+
+    // 공과 공의 상호작용 설정
+    world.addContactMaterial(new CANNON.ContactMaterial(ballMat, ballMat, { friction: 0.01, restitution: 1 }));
+
+    // 단 하나의 공 생성
+    const startColor = teams[0].color; // 시작은 레드팀
+    initialBallPosition = new THREE.Vector3(halfWidth - 2, ballRadius, -halfLength - 1); // 오른쪽 하단, 필드 라인 바깥
+    const startPos = initialBallPosition.clone();
+
+    // 각 팀의 초기 위치 설정
+    teams[turn].lastPosition = startPos.clone();
+
+    // Three.js 공 메쉬
+    const geo = new THREE.SphereGeometry(ballRadius, 32, 32);
+    const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: startColor, roughness: 0.3, metalness: 0.1, emissive: 0x000 }));
+    mesh.position.copy(startPos);
+    scene.add(mesh);
+
+    // Cannon.js 공 물리
+    const body = new CANNON.Sphere(ballRadius);
+    const cannonBody = new CANNON.Body({
+        mass: 1,
+        shape: body,
+        position: new CANNON.Vec3().copy(startPos),
+        material: ballMat,
+        linearDamping: 0.8, // 선형 감쇠 (속도 저하)
+        angularDamping: 0.4 // 회전 감쇠 (회전 저하)
+    });
+    // 공이 중력의 영향을 받지 않도록 매 프레임마다 중력의 반대 힘을 가함
+    cannonBody.addEventListener('preStep', () => {
+        const gravity = world.gravity;
+        cannonBody.applyForce(new CANNON.Vec3(-gravity.x, -gravity.y, -gravity.z).scale(cannonBody.mass));
+    });
+    world.addBody(cannonBody);
+
+    // 터널링 방지
+    cannonBody.ccdSpeedThreshold = 10;
+    cannonBody.ccdSweptSphereRadius = ballRadius;
+
+    // 공 정보 저장
+    mesh.userData = {
+        body: cannonBody,
+        passedGates: [false, false, false],
+        isGoal: false,
+        isOut: false
+    };
+    cannonBody.userData = mesh; // 물리 바디에서도 메쉬 접근
+
+    balls.push(mesh); // 배열에 단 하나의 공을 추가
+}
+
+/* ====== UI 업데이트 함수 ====== */
+function updateTurnUI(){ 
+    const ball = balls[0];
+    if (!ball) return;
+    turnsLeftDiv.textContent = `남은 횟수: ${turnsLeft}번`;
+    updateInfoUI(); 
+    updateScoreUI(); 
+}
+function updateInfoUI(){ 
+    // 게이트 통과 정보 표시
+    const ball = balls[0];
+    if (!ball) return;
+    const passed = ball.userData.passedGates;
+    infoDiv.textContent = `게이트: 1[${passed[0]?'O':'X'}] 2[${passed[1]?'O':'X'}] 3[${passed[2]?'O':'X'}]`;
+}
+function updateScoreUI(){ 
+    scoreDiv.textContent = `점수: ${scores[turn]}점`; 
+}
+
+/* ====== 마우스 클릭 처리 ====== */
+function onPointerDown(event){
+    if(isTurnPlaying) return; // 턴 진행중이면 선택 불가
+
+    const currentBall = balls[0];
+    if (!currentBall) return; // 현재 턴의 공이 없으면 리턴
+
+    // 마우스 좌표를 -1~1 범위로 변환
+    mouse.x = (event.clientX/window.innerWidth)*2-1;
+    mouse.y = -(event.clientY/window.innerHeight)*2+1;
+
+    raycaster.setFromCamera(mouse, camera); // 레이캐스터 설정
+
+    const intersects = raycaster.intersectObject(currentBall); // 현재 턴의 공만 선택
+    if(intersects.length>0){
+        if(selectedBall) selectedBall.material.emissive.setHex(0x000); // 이전 공 색 해제
+        selectedBall = intersects[0].object; // 선택 공
+        selectedBall.material.emissive.setHex(0x00ff00); // 선택 표시
+
+        // 카메라를 공 뒤쪽으로 부드럽게 이동
+        const pos = selectedBall.position.clone();
+        new Tween(camera.position)
+            .to({x: pos.x, y: pos.y + 2, z: pos.z - 5}, 800) // 카메라를 공의 뒤쪽 위로 이동
+            .easing(Easing.Cubic.Out).start();
+
+        // 카메라의 타겟(회전 중심)을 공으로 설정
+        new Tween(controls.target)
+            .to({x: pos.x, y: pos.y, z: pos.z}, 800)
+            .easing(Easing.Cubic.Out).start();
+    }
+}
+
+/* ====== 게이지 충전 ====== */
+chargeBtn.addEventListener('click',()=>{
+    if(!selectedBall || charging) return;
+
+    charging=true; 
+    chargePower=0; 
+    chargeBarContainer.style.display='block'; // 게이지 표시
+
+    const obj={val:0};
+    tween = new Tween(obj)
+        .to({val:1},500)
+        .easing(Easing.Linear.None)
+        .yoyo(true)
+        .repeat(Infinity)
+        .onUpdate(()=>{ 
+            chargePower = obj.val; 
+            chargeBar.style.width=`${chargePower*100}%`; 
+        })
+        .start();
+
+    hitBtn.disabled=false; // 치기 버튼 활성화
+});
+
+/* ====== 알 치기 ====== */
+hitBtn.addEventListener('click', () => {
+    if (!selectedBall || !charging) return;
+
+    // 항상 단 하나의 공이므로, 선택된 공이 맞는지 확인
+    if (selectedBall !== balls[0]) return;
+
+    charging = false;
+    tween.stop();
+    hitBtn.disabled = true;
+    chargeBarContainer.style.display = 'none';
+    selectedBall.material.emissive.setHex(0x000);
+
+    const body = selectedBall.userData.body;
+    if (!body) return;
+
+    // 카메라 방향 (XZ 평면)
+    const dir = new THREE.Vector3();
+    camera.getWorldDirection(dir);
+    dir.y = 0;
+    dir.normalize();
+    
+    // 힘 적용
+    const force = 40 * chargePower; // 게이지에 따라 힘 크기
+    body.applyImpulse(new CANNON.Vec3(dir.x * force, 0, dir.z * force), body.position);
+
+    // 현재 턴의 시작 위치를 저장
+    teams[turn].lastPosition.copy(selectedBall.position);
+
+    // 카메라 컨트롤을 초기 상태(경기장 전체 보기)로 되돌림
+    controls.reset();
+
+    selectedBall = null;
+    isTurnPlaying = true; // 턴 진행 시작
+    chargeBtn.disabled = true; // '치기 준비' 버튼 비활성화
+    sparkInfoDiv.textContent = '';
+});
+
+/* ====== 공 제거 함수 ====== */
+function removeBall(ball) {
+    world.removeBody(ball.userData.body);
+    scene.remove(ball);
+
+    // balls 배열에서 제거
+    const ballIndex = balls.indexOf(ball);
+    if (ballIndex > -1) {
+        balls.splice(ballIndex, 1);
+    };
+    
+    // 공이 하나뿐이므로 공이 제거되면 즉시 게임 종료
+    endGame();
+};
+
+/* ====== 충돌 감지 이벤트 리스너 ====== */
+function setupCollisionListener() {
+    balls.forEach(ball => {
+        ball.userData.body.addEventListener('collide', (event) => {
+            if (!isTurnPlaying) return;
+
+            const currentBallMesh = balls[0];
+            if (!currentBallMesh) return;
+            const currentBallBody = currentBallMesh.userData.body;
+
+            // 내가 친 공이 다른 물체와 충돌했을 때
+            if (event.target === currentBallBody || event.body === currentBallBody) {
+                const otherBody = event.target === currentBallBody ? event.body : event.target;
+                const otherMesh = otherBody.userData;
+            };
+        });
+    });
+};
+
+/* ====== 턴 종료 조건 확인 및 처리 ====== */
+function checkEndTurn() {
+    // 모든 공이 멈췄는지 확인
+    if (isTurnPlaying && balls.every(b => !b.userData.body || b.userData.body.velocity.lengthSquared() < 0.001)) {
+        isTurnPlaying = false;
+
+        // 첫 타격 후 공이 멈췄다면, isFirstShot을 false로 변경
+        if (isFirstShot) {
+            isFirstShot = false;
+        };
+
+        // 추가 턴이 없으면 턴 종료
+        if (!hasAnotherTurn) {
+            setTimeout(endTurn, 500);
+        } else { // 추가 턴이 있으면 현재 턴 유지
+            hasAnotherTurn = false;
+            chargeBtn.disabled = false;
+            updateTurnUI();
+        };
+    };
+};
+
+/* ====== 턴 종료 처리 ====== */
+function endTurn(){
+    if (checkGameEnd()) return;
+    hasAnotherTurn = false;
+
+    const ball = balls[0];
+    if (!ball) return;
+
+    // 턴 횟수 차감
+    turnsLeft--;
+
+    updateTurnUI();
+
+    // 남은 횟수가 0이면 게임 종료
+    if (turnsLeft <= 0) {
+        setTimeout(() => endGame(), 500);
+        return;
+    };
+
+    chargeBtn.disabled = false; // 다음 턴을 위해 '치기 준비' 버튼 활성화
+};
+
+/* ====== 게임 종료 조건 확인 및 처리 ====== */
+function checkGameEnd() {
+    if (balls.length === 0) {
+        endGame();
+        return true;
+    }
+    return false;
+}
+
+function endGame(winnerTeamIndex = -1) {
+    let winnerMsg = "";
+    if (winnerTeamIndex !== -1) {
+        winnerMsg = `축하합니다! 모든 게이트를 통과했습니다!`;
+    } else if (turnsLeft <= 0) {
+        winnerMsg = `게임 종료! 최종 점수: ${scores[turn]}점`;
+    } else {
+        winnerMsg = "게임 종료!";
+    }
+    winnerDiv.textContent = winnerMsg;
+    winnerDiv.style.display = 'block';
+    chargeBtn.disabled = true;
+    hitBtn.disabled = true;
+}
+
+/* ====== 리사이즈 처리 ====== */
+function onWindowResize(){
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+/* ====== 애니메이션 루프 ====== */
+function animate(time){
+    requestAnimationFrame(animate);
+
+    // ====== 물리 엔진 업데이트 (고정 시간 간격) ======
+    if (lastTime !== undefined) {
+        const dt = (time - lastTime) / 1000;
+        // 고정된 시간 간격(1/360초)으로 물리 시뮬레이션을 여러 번 실행하여 정확도를 높입니다.
+        world.step(1 / 360, dt, 10);
+    }
+    lastTime = time;
+
+    // 공 위치 업데이트 및 필드 아웃 처리
+    for (let i = balls.length - 1; i >= 0; i--) {
+        const s = balls[i];
+        if (!s || !s.userData.body) continue;
+
+        const b = s.userData.body;
+        if (b) {
+            // 1. 외부 경기장(초록색) 밖으로 나갔을 때: 즉시 정지
+            const isTotallyOut = Math.abs(b.position.x) > outerGroundWidth / 2 || Math.abs(b.position.z) > outerGroundLength / 2;
+            if (isTotallyOut) {
+                // 공의 속도와 회전을 멈춤
+                if (b.velocity.lengthSquared() > 0.01) {
+                    b.velocity.set(0, 0, 0);
+                    b.angularVelocity.set(0, 0, 0);
+                }
+            }
+
+            // 2. 내부 경기장(흰색 라인) 밖으로 나갔을 때: 아웃 처리 (횟수/위치 초기화)
+            const isOutOfInnerField = Math.abs(b.position.x) > halfWidth || Math.abs(b.position.z) > halfLength;
+            // 첫 타격 시에는 공이 이미 밖에 있으므로 아웃 처리를 하지 않음
+            if (isOutOfInnerField && !isFirstShot) {
+                console.log(`공 아웃!`); // 콘솔에 아웃 메시지 출력
+                
+                // 게이트 통과 기록 및 점수 초기화
+                s.userData.passedGates = [false, false, false];
+                scores[turn] = 0;
+
+                turnsLeft = MAX_TURNS; // 남은 횟수를 최대로 초기화
+                updateTurnUI(); // UI에 변경된 횟수 반영
+                setTimeout(() => {
+                    b.velocity.set(0, 0, 0);
+                    b.angularVelocity.set(0, 0, 0);
+                    b.position.copy(initialBallPosition);
+                }, 100); // 아웃 직전 위치가 아닌, 해당 턴의 시작 위치로 리셋
+                isTurnPlaying = false; // '턴 진행 중' 상태를 해제
+                chargeBtn.disabled = false; // '치기 준비' 버튼을 다시 활성화
+                isFirstShot = true; // 다시 첫 타격 상태로 변경
+            }
+
+            // 렌더링 반영
+            s.position.copy(b.position);
+            s.quaternion.copy(b.quaternion);
+        }
+    }
+
+    // 게이트 통과 감지
+    if (isTurnPlaying) {
+        const currentBall = balls[0];
+        if (currentBall) {
+            const ballBox = new THREE.Box3().setFromObject(currentBall);
+            for (let i = 0; i < gateColliders.length; i++) {
+                const gateCollider = gateColliders[i];
+                const data = currentBall.userData;
+                // 아직 통과하지 않은 다음 순서의 게이트인지 확인
+                const nextGateIndex = data.passedGates.indexOf(false);
+                if (i === nextGateIndex) {
+                    const gateBox = new THREE.Box3().setFromObject(gateCollider);
+                    if (ballBox.intersectsBox(gateBox)) {
+                        console.log(`${i + 1}번 게이트 통과!`);
+                        data.passedGates[i] = true;
+                        scores[turn]++;
+                        hasAnotherTurn = true; // 게이트 통과 시 추가 턴
+                        updateInfoUI();
+                        updateScoreUI();
+
+                        // 3번 게이트를 통과하면 게임 종료
+                        if (i === 2) {
+                            setTimeout(() => endGame(turn), 500);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 게이트 번호가 항상 카메라를 바라보게 함
+    gates.forEach(gateData => {
+        if (gateData.numberMesh) {
+            gateData.numberMesh.lookAt(camera.position);
+        }
+    });
+
+    // 턴 종료 조건 확인
+    checkEndTurn();
+
+    // 선택된 돌이 있으면 화살표 업데이트
+    if (selectedBall && !isTurnPlaying) {
+        // 카메라 위치에서 타겟을 바라보는 방향 벡터를 계산합니다.
+        const dir = new THREE.Vector3().subVectors(controls.target, camera.position);
+        dir.y = 0; // y축 값을 0으로 만들어 수평 방향만 사용합니다.
+        dir.normalize();
+
+        arrowHelper.position.copy(selectedBall.position);
+        arrowHelper.setDirection(dir);
+        arrowHelper.visible = true;
+    } else {
+        arrowHelper.visible = false;
+    }
+
+    // 충전 중일 때 게이지 바 위치 업데이트
+    if (charging && selectedBall) {
+        const screenPosition = selectedBall.position.clone();
+        // 3D 좌표를 2D 화면 좌표로 변환
+        screenPosition.project(camera);
+
+        // 화면 좌표를 CSS 픽셀 값으로 변환
+        const x = (screenPosition.x * 0.5 + 0.5) * window.innerWidth;
+        const y = (-screenPosition.y * 0.5 + 0.5) * window.innerHeight;
+
+        // 게이지 바 위치 설정 (돌 아래쪽으로)
+        chargeBarContainer.style.left = `${x - chargeBarContainer.offsetWidth / 2}px`;
+        chargeBarContainer.style.top = `${y + 30}px`; // 돌 아래에 여유 공간
+        chargeBarContainer.style.display = 'block';
+    }
+
+    TWEENUpdate(time); // Tween.js 업데이트
+    controls.update(); // 카메라 컨트롤
+    renderer.render(scene,camera); // 메인 렌더링
+    miniRenderer.render(scene,miniCamera); // 미니맵 렌더링
+}
+
+/* ====== 실행 ====== */
+init();
+animate(); // 애니메이션 시작
+</script>
+</body>
+</html>
