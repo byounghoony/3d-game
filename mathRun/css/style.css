@@ -336,12 +336,12 @@ canvas.on { display: block !important; }
 .stageEndContainer > div span:first-of-type {
   position: absolute;
   top: 411px;
-  left: 195px;
+  left: 180px;
   font-size: 62px;
   color: #FFBE4E;
   text-align: right;
   font-family: 'Cafe24';
-  width: 160px;
+  width: 180px;
 }
 
 .stageEndContainer > div span:last-of-type {

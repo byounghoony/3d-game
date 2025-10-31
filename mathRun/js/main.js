@@ -55,17 +55,17 @@ closeHowBtn.addEventListener('click', () => {
   wrap.classList.remove('showHow');
 });
 
+bgmBtn.on = () => {
+  bgmBtn.classList.remove('off');
+  bgmSound.play();
+};
+
+bgmBtn.off = () => {
+  bgmBtn.classList.add('off');
+  bgmSound.pause();
+};
+
 bgmBtn.addEventListener('click', () => {
-  bgmBtn.on = () => {
-    bgmBtn.classList.remove('off');
-    bgmSound.play();
-  };
-
-  bgmBtn.off = () => {
-    bgmBtn.classList.add('off');
-    bgmSound.pause();
-  };
-
   if (bgmBtn.classList.contains('off')) bgmBtn.on();
   else bgmBtn.off();
 });
