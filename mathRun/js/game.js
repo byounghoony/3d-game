@@ -59,24 +59,20 @@ const bgTextures = [
     // textureLoader.load('./images/bg/bg_4.png'),
   ],
   [
-    textureLoader.load('./images/bg/bus_bg_0.png'),
-    textureLoader.load('./images/bg/bus_bg_0.png'),
-    textureLoader.load('./images/bg/bus_bg_0.png'),
+    textureLoader.load('./images/bg/bg_1.png'),
+    textureLoader.load('./images/bg/bg_2.png'),
   ],
   [
-    textureLoader.load('./images/bg/bus_bg_2.png'),
-    textureLoader.load('./images/bg/bus_bg_1.png'),
-    textureLoader.load('./images/bg/bus_bg_0.png'),
+    textureLoader.load('./images/bg/bg_1.png'),
+    textureLoader.load('./images/bg/bg_2.png'),
   ],
   [
-    textureLoader.load('./images/bg/bus_bg_0.png'),
-    textureLoader.load('./images/bg/bus_bg_1.png'),
-    textureLoader.load('./images/bg/bus_bg_2.png'),
+    textureLoader.load('./images/bg/bg_1.png'),
+    textureLoader.load('./images/bg/bg_2.png'),
   ],
   [
-    textureLoader.load('./images/bg/bus_bg_0.png'),
-    textureLoader.load('./images/bg/bus_bg_0.png'),
-    textureLoader.load('./images/bg/bus_bg_0.png'),
+    textureLoader.load('./images/bg/bg_1.png'),
+    textureLoader.load('./images/bg/bg_2.png'),
   ],
 ];
 
