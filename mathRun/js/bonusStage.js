@@ -1,6 +1,6 @@
 import { startGame } from "./game.js";
 import { renderLives, updateStageLabel } from "./ui.js";
-import { addScore, clearTimers, currentStage, incrementCurrentStage, lives, moveToLane, overEvent, score, setLives, setSpawning, shuffle } from "./utils.js";
+import { addScore, clearTimers, currentStage, incrementCurrentStage, lives, moveToLane, overEvent, playEfSound, score, setLives, setSpawning, shuffle } from "./utils.js";
 
 export const stageEndContainer = document.getElementById('js-stageEndContainer');
 export const bonusStageBtn = document.getElementById('js-bonusStageBtn');
