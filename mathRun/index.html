@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="css/style.css">
+  <title>수학 런</title>
+</head>
+<body>
+  <div id="app" class="js-scale">
+    <div id="js-bootContainer" class="bootContainer">
+      <div id="js-bootLogo" class="logo"></div>
+    </div> <!--// bootContainer -->
+
+    <div id="js-mainContainer" class="mainContainer">
+      <p class="title"></p>
+
+      <button id="js-startBtn" class="startBtn btn"></button>
+      <button id="js-howBtn" class="howBtn btn"></button>
+
+      <div class="howPop">
+        <div class="howBox">
+          <button id="js-closeHowBtn" class="closeHowBtn btn"></button>
+        </div>
+      </div> <!--// howPop -->
+    </div> <!--// mainContainer-->
+
+    <div id="js-gameContainer" class="gameContainer">
+      <div id="js-bgmBtn" class="bgmBtn off"></div>
+      <!-- <div id="js-playBtn" class="playBtn off"></div> -->
+
+      <div class="scoreVal"><span id="js-scoreVal">0</span></div>
+
+      <div id="js-lives" class="lives" >
+        <span></span>
+        <span></span>
+        <span></span>
+      </div> <!--// lives -->
+
+      <div id="js-stageLabel" class="stageLabel">
+        <span>1단계</span> <span>한 자리 수의 덧셈</span>
+      </div> <!--// stageLabel -->
+
+      <div class="controls">
+        <button id="js-leftBtn" class="leftBtn"></button>
+        <button id="js-rightBtn" class="rightBtn"></button>
+      </div> <!--// controls -->
+
+      <div id="js-stageEndContainer" class="stageEndContainer">
+        <div>
+          <span>1단계</span>
+          <span>000</span>
+          <div class="success"></div>
+          <button id="js-bonusStageBtn" class="bonusStageBtn"></button>
+        </div>
+      </div> <!--// stageEndContainer -->
+     
+      <div id="js-bonusStageContainer" class="bonusStageContainer">
+      </div> <!--// bonusStageContainer -->
+
+      <div id="js-gameOverContainer" class="gameOverContainer">
+        <div class="gameover"></div>
+        <div id="js-gameoverText" class="gameoverText">
+          <div>총 <span>1</span>단계 <span>9999</span>점을 획득하셨습니다.</div>
+        </div> <!--// gameoverText -->
+        <button id="js-restartBtn" class="btn restartBtn"></button>
+      </div> <!--// gameOverContainer -->
+    </div> <!--// gameContainer-->
+  </div> <!--// app -->
+
+  <script src="./js/scale.js"></script>
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
