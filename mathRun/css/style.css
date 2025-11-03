@@ -533,7 +533,22 @@ canvas.on { display: block !important; }
 
 .gameOverContainer.winGame {
   display: block;
-  background: rgba(0, 128, 0, 0.7);
+  background-image: url(../images/success_bg.png);
+}
+.gameOverContainer.winGame .gameover {
+  position: absolute;
+  top: 255px;
+  left: calc(50% - 1396px / 2);
+  width: 1396px;
+  height: 240px;
+  background-image: url(../images/gamecomplete.png);
+  background-size: 100% 100%;
+  clip-path: inset(0 100% 0 0);
+  animation: gameCompleteAni 1.5s linear forwards;
+}
+
+@keyframes gameCompleteAni {
+  to{ clip-path: inset(0 0 0 0); }
 }
 
 .gameOverContainer.loseGame {
@@ -563,7 +578,7 @@ canvas.on { display: block !important; }
   100% { top: 255px; transform: scale(1) skew(0deg, 0deg); }
 }
 
-.gameOverContainer.loseGame .gameoverText {
+.gameOverContainer .gameoverText {
   position: absolute;
   top: 520px;
   left: calc(50% - 937px / 2);
@@ -580,10 +595,12 @@ canvas.on { display: block !important; }
   transition: 0.8s;
 }
 
-.gameOverContainer.loseGame.aniFinish .gameoverText { opacity: 1; }
-.gameOverContainer.loseGame.aniFinish .restartBtn { opacity: 1; pointer-events: auto; } 
+.gameOverContainer.aniFinish .gameoverText { opacity: 1; }
+.gameOverContainer.aniFinish .restartBtn { opacity: 1; pointer-events: auto; } 
 
-.gameOverContainer .gameoverText > div { margin-top: 10px; }
+.gameOverContainer .gameoverText > div { margin-top: 10px; display: none; }
+.gameOverContainer.loseGame .gameoverText > div:first-of-type { display: block; }
+.gameOverContainer.winGame .gameoverText > div:last-of-type { display: block; }
 
 .gameOverContainer .gameoverText span {
   color: #673EAA;

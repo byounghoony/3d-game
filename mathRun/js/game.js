@@ -195,6 +195,9 @@ export function endGame(win){
 
 function winGame(){
   gameOverContainer.classList.add('winGame');
+  setTimeout(() => {
+    gameOverContainer.classList.add('aniFinish');
+  }, 1500);
 };
 
 function loseGame(){
