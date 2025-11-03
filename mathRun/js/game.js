@@ -194,6 +194,7 @@ export function endGame(win){
 };
 
 function winGame(){
+  playEfSound('win');
   gameOverContainer.classList.add('winGame');
   setTimeout(() => {
     gameOverContainer.classList.add('aniFinish');
@@ -201,6 +202,7 @@ function winGame(){
 };
 
 function loseGame(){
+  playEfSound('lose');
   gameOverContainer.classList.add('loseGame');
   setTimeout(() => {
     gameOverContainer.classList.add('aniFinish');

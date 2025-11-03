@@ -1,4 +1,4 @@
-import { currentStage, laneIndex, lives, moveToLane, overEvent, r } from "./utils.js";
+import { currentStage, laneIndex, lives, moveToLane, r } from "./utils.js";
 
 export const leftBtn = document.getElementById('js-leftBtn');
 export const rightBtn = document.getElementById('js-rightBtn');
@@ -6,14 +6,36 @@ export const scoreVal = document.getElementById('js-scoreVal');
 export const livesEl = document.getElementById('js-lives').querySelectorAll('span');
 export const stageLabel = document.getElementById('js-stageLabel');
 
-overEvent(leftBtn);
-overEvent(rightBtn);
-
 leftBtn.addEventListener('click', () => moveToLane(laneIndex - 1, true));
 rightBtn.addEventListener('click', () => moveToLane(laneIndex + 1, true));
+leftBtn.addEventListener('mousedown', () => leftBtn.classList.add('hover'));
+leftBtn.addEventListener('touchstart', () => leftBtn.classList.add('hover'));
+rightBtn.addEventListener('mousedown', () => rightBtn.classList.add('hover'));
+rightBtn.addEventListener('touchstart', () => rightBtn.classList.add('hover'));
+
+document.addEventListener('mouseup', () => {
+  leftBtn.classList.remove('hover');
+  rightBtn.classList.remove('hover')
+});
+document.addEventListener('touchend', () => {
+  leftBtn.classList.remove('hover');
+  rightBtn.classList.remove('hover')
+});
+
 window.addEventListener('keydown', e => {
-  if(e.key === 'ArrowLeft') moveToLane(laneIndex - 1, true);
-  if(e.key === 'ArrowRight') moveToLane(laneIndex + 1, true);
+  if(e.key === 'ArrowLeft') {
+    leftBtn.classList.add('hover');
+    moveToLane(laneIndex - 1, true);
+  };
+  if(e.key === 'ArrowRight') {
+    rightBtn.classList.add('hover');
+    moveToLane(laneIndex + 1, true);
+  };
+});
+
+window.addEventListener('keyup', e => {
+  if(e.key === 'ArrowLeft') leftBtn.classList.remove('hover');
+  if(e.key === 'ArrowRight') rightBtn.classList.remove('hover');
 });
 
 export const stageDefs = [

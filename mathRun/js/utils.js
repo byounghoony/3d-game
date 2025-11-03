@@ -46,6 +46,9 @@ export function clearTimers() {
 };
 
 export const playEfSound = (name = 'button') => {
+  effectSound.pause();
+  effectSound.currentTime = 0;
+  
   effectSound.src = `./media/${name}.mp3`;
   effectSound.load();
   effectSound.onloadedmetadata = () => effectSound.play();

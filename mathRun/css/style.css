@@ -537,10 +537,11 @@ canvas.on { display: block !important; }
 }
 .gameOverContainer.winGame .gameover {
   position: absolute;
-  top: 255px;
+  top: 250px;
   left: calc(50% - 1396px / 2);
   width: 1396px;
   height: 240px;
+  transform: scale(1.2);
   background-image: url(../images/gamecomplete.png);
   background-size: 100% 100%;
   clip-path: inset(0 100% 0 0);

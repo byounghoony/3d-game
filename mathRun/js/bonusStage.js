@@ -51,6 +51,7 @@ function createBox() {
     overEvent(box);
 
     box.addEventListener('click', () => {
+      playEfSound('box_open');
       box.classList.add('open'); 
       openBox(bonusList[i]); 
     });

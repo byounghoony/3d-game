@@ -31,6 +31,10 @@ bootLogo.addEventListener('animationend', () => {
 
 startBtn.addEventListener('click', () =>{
   if(!spawning){
+    if (!bgmBtn.hasAttribute('data-bg')) {
+      bgmSound.currentTime = 0;
+      bgmBtn.on();
+    };
     playEfSound();
     resetGame();
     startGame();
@@ -58,16 +62,18 @@ closeHowBtn.addEventListener('click', () => {
 bgmBtn.on = () => {
   bgmBtn.classList.remove('off');
   bgmSound.play();
+  bgmBtn.removeAttribute('data-bg');
 };
 
-bgmBtn.off = () => {
+bgmBtn.off = (set) => {
   bgmBtn.classList.add('off');
   bgmSound.pause();
+  if (set) bgmBtn.setAttribute('data-bg', false);
 };
 
 bgmBtn.addEventListener('click', () => {
   if (bgmBtn.classList.contains('off')) bgmBtn.on();
-  else bgmBtn.off();
+  else bgmBtn.off(true);
 });
 
 // playBtn.addEventListener('click', () => {
