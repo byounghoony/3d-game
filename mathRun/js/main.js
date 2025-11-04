@@ -26,6 +26,15 @@ overEvent(howBtn);
 overEvent(closeHowBtn);
 overEvent(retryBtn);
 
+const imagesToPreload = [
+  '../images/bonus_bg.png',
+];
+
+imagesToPreload.forEach(src => {
+  const img = new Image();
+  img.src = src;
+});
+
 /* boot 애니메이션 후 로딩화면 전환 */
 bootLogo.addEventListener('animationend', () => {
   bootContainer.classList.add('aniStart');
