@@ -5,27 +5,34 @@ import { overEvent, spawning, setSpawning, getLastSpawnTime, setRemainingTime, g
 export const wrap = document.getElementById('app');
 
 // 기본 UI 요소
+export const bootContainer = document.getElementById('js-bootContainer');
+export const bootLogo = document.getElementById('js-bootLogo');
+
+export const loadingContainer = document.getElementById('js-loadingContainer');
+
+export const mainContainer = document.getElementById('js-mainContainer');
 export const startBtn = document.getElementById('js-startBtn');
 export const howBtn = document.getElementById('js-howBtn');
 export const closeHowBtn = document.getElementById('js-closeHowBtn');
-export const mainContainer = document.getElementById('js-mainContainer');
-export const gameOverContainer = document.getElementById('js-gameOverContainer');
-export const finalScore = document.getElementById('js-finalScore');
-export const retryBtn = document.getElementById('js-restartBtn');
 export const playBtn = document.getElementById('js-playBtn');
 export const bgmBtn = document.getElementById('js-bgmBtn');
 
-export const bootContainer = document.getElementById('js-bootContainer');
-export const bootLogo = document.getElementById('js-bootLogo');
+export const gameOverContainer = document.getElementById('js-gameOverContainer');
+export const finalScore = document.getElementById('js-finalScore');
+export const retryBtn = document.getElementById('js-restartBtn');
 
 overEvent(startBtn);
 overEvent(howBtn);
 overEvent(closeHowBtn);
 overEvent(retryBtn);
 
-/* boot 애니메이션 후 메인화면 전환 */
+/* boot 애니메이션 후 로딩화면 전환 */
 bootLogo.addEventListener('animationend', () => {
   bootContainer.classList.add('aniStart');
+  loadingContainer.classList.add('aniStart');
+});
+
+loadingContainer.querySelector('#js-loadingAni').addEventListener('animationend', () => {
   mainContainer.classList.add('aniStart');
 });
 
@@ -39,6 +46,7 @@ startBtn.addEventListener('click', () =>{
     resetGame();
     startGame();
     renderer.domElement.classList.add('on');
+    loadingContainer.classList.remove('aniStart');
     mainContainer.classList.remove('aniStart');
     mainContainer.classList.add('opacity');
   };

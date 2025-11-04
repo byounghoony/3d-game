@@ -61,14 +61,12 @@ canvas.on { display: block !important; }
 #app.startGame .mainContainer { display: none; }
 #app.startGame .gameContainer { display: block; }
 
-.mainContainer.aniStart {
-  animation: mainContainer 1s linear forwards;
+#app > div.mainContainer.aniStart {
+  /* animation: opacityOn 1s linear forwards; */
+  display: block;
+  opacity: 1; pointer-events: auto;
 }
 
-@keyframes mainContainer {
-  0% { opacity: 0; pointer-events: none; }
-  100% { opacity: 1; pointer-events: auto; }
-}
 .bootContainer { display: block !important; background-color: #c9effa; }
 .bootContainer.aniStart {
   animation: bootContainer 1s linear forwards;
@@ -98,6 +96,51 @@ canvas.on { display: block !important; }
   13% { opacity: 1; margin-top: 0px; }
   90% { opacity: 1; margin-top: 0px; }
   100% { opacity: 0; margin-top: 30px; }
+}
+
+/* 로딩 화면 */
+.loadingContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  background-color: #c9effa;
+}
+
+.loadingContainer.aniStart {
+  display: flex !important;
+}
+
+.loadingContainer .loadingBox {
+  width: 500px;
+  height: 30px;
+  background-color: #fff;
+  border: 3px solid #94ccdc;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loadingContainer .loadingBox > div {
+  width: 496px;
+  height: 26px;
+  background-color: #94ccdc;
+  clip-path: inset(0 100% 0 0);
+  border-radius: 30px;
+  animation: loadingAni 0.5s ease-in-out forwards;
+}
+
+@keyframes loadingAni {
+  to{ clip-path: inset(0 0 0 0); }
+}
+
+@keyframes opacityOn {
+  0% { opacity: 0; pointer-events: none; }
+  100% { opacity: 1; pointer-events: auto; }
 }
 
 /* 메인 화면 */
@@ -272,7 +315,7 @@ canvas.on { display: block !important; }
 }
 
 .lives span.off {
-  animation: liveAni 1s linear forwards;
+  animation: liveAni 0.5s linear forwards;
 }
 
 @keyframes liveAni {
