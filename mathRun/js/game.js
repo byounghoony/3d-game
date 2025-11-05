@@ -51,28 +51,24 @@ let bgIndex = 0;
 const textureLoader = new THREE.TextureLoader();
 const bgTextures = [
   [
-    // textureLoader.load('./images/tree_1.png'),
-    // textureLoader.load('./images/tree_2.png'),
-    textureLoader.load('./images/bg/bg_1.png'),
-    textureLoader.load('./images/bg/bg_2.png'),
-    // textureLoader.load('./images/bg/bg_3.png'),
-    // textureLoader.load('./images/bg/bg_4.png'),
+    textureLoader.load('./images/game_bg.png'),
+    textureLoader.load('./images/game_bg.png'),
   ],
   [
-    textureLoader.load('./images/bg/bg_1.png'),
-    textureLoader.load('./images/bg/bg_2.png'),
+    textureLoader.load('./images/game_bg.png'),
+    textureLoader.load('./images/game_bg.png'),
   ],
   [
-    textureLoader.load('./images/bg/bg_1.png'),
-    textureLoader.load('./images/bg/bg_2.png'),
+    textureLoader.load('./images/game_bg.png'),
+    textureLoader.load('./images/game_bg.png'),
   ],
   [
-    textureLoader.load('./images/bg/bg_1.png'),
-    textureLoader.load('./images/bg/bg_2.png'),
+    textureLoader.load('./images/game_bg.png'),
+    textureLoader.load('./images/game_bg.png'),
   ],
   [
-    textureLoader.load('./images/bg/bg_1.png'),
-    textureLoader.load('./images/bg/bg_2.png'),
+    textureLoader.load('./images/game_bg.png'),
+    textureLoader.load('./images/game_bg.png'),
   ],
 ];
 
