@@ -28,6 +28,13 @@ overEvent(retryBtn);
 
 const imagesToPreload = [
   '../images/bonus_bg.png',
+  '../images/startBtn_hover.png',
+  '../images/howBtn_hover.png',
+  '../images/close_hover.png',
+  '../images/resetBtn_hover.png',
+  '../images/left_hover.png',
+  '../images/right_hover.png',
+  '../images/boxBtn_hover.png',
 ];
 
 imagesToPreload.forEach(src => {

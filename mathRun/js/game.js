@@ -49,34 +49,17 @@ let bgIndex = 0;
 
 // 배경 텍스처 로드
 const textureLoader = new THREE.TextureLoader();
-const bgTextures = [
-  [
-    textureLoader.load('./images/game_bg.png'),
-    textureLoader.load('./images/game_bg.png'),
-  ],
-  [
-    textureLoader.load('./images/game_bg.png'),
-    textureLoader.load('./images/game_bg.png'),
-  ],
-  [
-    textureLoader.load('./images/game_bg.png'),
-    textureLoader.load('./images/game_bg.png'),
-  ],
-  [
-    textureLoader.load('./images/game_bg.png'),
-    textureLoader.load('./images/game_bg.png'),
-  ],
-  [
-    textureLoader.load('./images/game_bg.png'),
-    textureLoader.load('./images/game_bg.png'),
-  ],
-];
+const bgTextures = [];
+loadTextureArray({bgText: 'dd', stage: 1, numFrames: 60});
 
-// 배경 텍스처를 2개로 늘리고, 각 배경을 위한 Mesh를 생성합니다.
-const bgTexture1 = textureLoader.load('./images/game_bg.png'); // 전체 배경
-const bgMaterial1 = new THREE.MeshBasicMaterial({ map: bgTexture1 });
-const bgMesh1 = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), bgMaterial1);
-backgroundScene.add(bgMesh1);
+function loadTextureArray({bgText, stage, numFrames}) {
+  const bgPath = './images/bg/';
+  bgTextures[stage - 1] = [];
+  for (let i = 1; i <= numFrames; i++) {
+    const frameNumber = String(i).padStart(4, '0');
+    bgTextures[stage - 1].push(textureLoader.load(`${bgPath}${bgText}${frameNumber}.png`));
+  };
+}; // load texture
 
 const bgMaterial2 = new THREE.MeshBasicMaterial({
   map: bgTextures[currentStage - 1][0],
@@ -87,9 +70,9 @@ backgroundScene.add(bgMesh2);
 
 export async function checkDoors(delta){
   aniIndex++;
-  if (aniIndex % 12 === 0) {
+  if (aniIndex % 2 === 0) {
     bgIndex++;
-    const bg = bgTextures[currentStage -1];
+    const bg = bgTextures[currentStage % bgTextures.length]; // 코드 수정
     bgMesh2.material.map = bg[bgIndex % bg.length]; // 두 번째 배경 Mesh의 텍스처를 교체합니다.
   };
 
