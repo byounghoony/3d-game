@@ -1,5 +1,7 @@
 @charset "UTF-8";
 
+* { user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; touch-action: none; }
+
 /* 폰트 */
 @font-face {
   font-family: 'GmarketB';
@@ -143,7 +145,7 @@ canvas.on { display: block !important; }
   100% { opacity: 1; pointer-events: auto; }
 }
 
-/* 메인 화면 */
+/* 인트로 화면 */
 .title { 
   position: absolute;
   top: 75px;
@@ -174,16 +176,11 @@ canvas.on { display: block !important; }
 .howBtn.hover { background-image: url(../images/howBtn_hover.png); backface-visibility: hidden; transform-style: preserve-3d; }
 
 .mainContainer.aniStart .startBtn { animation: scaleUp_start 1.8s forwards; }
-.mainContainer.aniStart .howBtn { animation: scaleUp_how 2.0s forwards; }
+.mainContainer.aniStart .howBtn { animation: scaleUp_start 2.0s forwards; }
 
 @keyframes scaleUp_start {
   0% { transform: scale(0) translateZ(0); }
   70% { transform: scale(0) translateZ(0); }
-  100% { transform: scale(1) translateZ(0); }
-}
-@keyframes scaleUp_how {
-  0% { transform: scale(0) translateZ(0); }
-  80% { transform: scale(0) translateZ(0); }
   100% { transform: scale(1) translateZ(0); }
 }
 
@@ -434,6 +431,7 @@ canvas.on { display: block !important; }
   background-image: url(../images/boxBtn_hover.png);
 }
 
+/* 보너스 스테이지 */
 .bonusStageContainer {
   position: absolute;
   top: 0;
@@ -562,7 +560,7 @@ canvas.on { display: block !important; }
   left: 1380px;
 }
 
-/* end game */
+/* 게임 오버 */
 .gameOverContainer {
   position: absolute;
   top: 0;

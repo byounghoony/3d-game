@@ -9,7 +9,7 @@ export let animalModel = null;
 export let mixer = null;
 export let runAction = null;
 
-// GLTF 모델 로드 (예: Running Tiger)
+// GLTF 모델 로드
 export const loader = new GLTFLoader();
 loader.load(
   './textures/mei.glb',
@@ -91,6 +91,7 @@ export const doors = [];
 export const doorGeo = new THREE.BoxGeometry(1.6,2.2,0.3);
 export const doorMat = new THREE.MeshStandardMaterial({ color:0xffffff, metalness:0.1, roughness:0.8 });
 
+/* 톨게이트(문) 생성 함수 */
 export function createTollGate(zPos, question, qNumber, answers) {
   const group = new THREE.Group();
 
@@ -110,7 +111,7 @@ export function createTollGate(zPos, question, qNumber, answers) {
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, 1024, 256);
   ctx.fillStyle = '#000';
-  ctx.font = 'bold 120px sans-serif';
+  ctx.font = 'bold 180px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(`${question}`, 512, 128); // 텍스트 위치는 그대로 유지
@@ -128,7 +129,7 @@ export function createTollGate(zPos, question, qNumber, answers) {
   numCanvas.height = 128;
   const numCtx = numCanvas.getContext('2d');
   numCtx.fillStyle = '#ffffff';
-  numCtx.font = 'bold 80px sans-serif';
+  numCtx.font = 'bold 100px sans-serif';
   numCtx.textAlign = 'center';
   numCtx.textBaseline = 'middle';
   numCtx.fillText(String(qNumber), 64, 64);
@@ -148,7 +149,7 @@ export function createTollGate(zPos, question, qNumber, answers) {
     new THREE.MeshStandardMaterial({ color: 0xffffff, map: numTex, transparent: true, alphaTest: 0.5 })
   );
   // 전광판 왼쪽에 배치
-  numBoard.position.set(-3.4, 3.4, 0.22);
+  numBoard.position.set(-3.4, 3.35, 0.22);
   group.add(numBoard);
 
   // 보기 3개 (레인별)
@@ -164,6 +165,7 @@ export function createTollGate(zPos, question, qNumber, answers) {
   return group;
 };
 
+/* 미니 게이트(보기) 생성 함수 */
 function createMiniGate(x, z, val, isCorrect, index) {
   const g = new THREE.Group();
   const canvas = document.createElement('canvas');
@@ -172,7 +174,7 @@ function createMiniGate(x, z, val, isCorrect, index) {
   ctx.fillStyle = index == 0 ? '#FAE67C' : index == 1 ? '#96DEF9' : '#FAA984';
   ctx.fillRect(0, 0, 256, 340);
   ctx.fillStyle = '#000';
-  ctx.font = 'bold 60px sans-serif';
+  ctx.font = 'bold 150px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(String(val), 128, 170);

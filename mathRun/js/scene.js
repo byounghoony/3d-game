@@ -9,7 +9,7 @@ export const scene = new THREE.Scene();
 export const backgroundScene = new THREE.Scene();
 export const backgroundCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1);
 
-const basicSize = { w: 1920, h: 1080 };
+const basicSize = { w: isMobile() ? 360 : 1920, h: isMobile() ? 780 : 1080 };
 export const camera = new THREE.PerspectiveCamera(45, setScale(basicSize.w) / setScale(basicSize.h), 0.1, 1000);
 camera.position.set(0, 1.8, 10);
 camera.lookAt(0, 1.5, 0);

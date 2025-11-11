@@ -1,3 +1,8 @@
+function isMobile() {
+  // return /Mobi|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
+  return false;
+};
+
 function initScale(element) {
   function getContainerSize() {
     return {
@@ -11,8 +16,9 @@ function initScale(element) {
     const containerHeight = containerSize.height;
     const horizontalValue = containerWidth / target.width;
     const verticalValue = containerHeight / target.height;
+    console.log(containerWidth, containerHeight, target);
 
-    return target.width * verticalValue > containerWidth ? horizontalValue : verticalValue;
+    return target.width * verticalValue > containerWidth && !isMobile() ? horizontalValue : verticalValue;
   };
 
   function getLeftValue({containerSize, target, zoomRate}) {
@@ -40,10 +46,7 @@ function initScale(element) {
     style.top = `${topValue}px`;
   };
 
-  const target = {
-    width: element.clientWidth,
-    height: element.clientHeight,
-  };
+  const target = { width: isMobile() ? 360 : 1920, height: isMobile() ? 780 : 1080 }
 
   const setScale = () => {
     const containerSize = getContainerSize();

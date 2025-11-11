@@ -5,6 +5,7 @@ export let score = 0, lives = 3, currentStage = 1, questionNumber = 1;
 export const spawnInterval = 3200;
 export let lastSpawnTime = 0;
 export let remainingTime = 0;
+export const imagePath = './images/';
 
 export let spawning = false, spawnTimer = null, resumeTimer = null, isRouletteActive = false, laneIndex = 1, isEndGame = false;
 
@@ -45,15 +46,17 @@ export function clearTimers() {
   clearTimeout(resumeTimer);
 };
 
+/* 효과음 재생 */
 export const playEfSound = (name = 'button') => {
+  effectSound.src = `./media/${name}.mp3`;
   effectSound.pause();
   effectSound.currentTime = 0;
   
-  effectSound.src = `./media/${name}.mp3`;
   effectSound.load();
   effectSound.onloadedmetadata = () => effectSound.play();
 };
 
+/* 사운드 초기화 */
 function playedSound(audio) {
   if (!audio.isPlayed) {
     audio.src = `./media/mute.mp3`;
@@ -74,6 +77,7 @@ function addSound() {
   [bgmSound, effectSound].forEach(playedSound);
 };
 
+/* 게임 상태 초기화 */
 export function resetGameStatus() {
   score = 0;
   lives = 3;
@@ -82,6 +86,7 @@ export function resetGameStatus() {
   isEndGame = false;
 };
 
+/* 레인 이동 함수 */
 export function moveToLane(i, controlled) {
   if (controlled && !spawning) return;
 
@@ -89,10 +94,12 @@ export function moveToLane(i, controlled) {
   if (animalModel) animalModel.position.x = laneX[laneIndex];
 };
 
+/* 랜덤 정수 생성 함수 */
 export function r(a,b) { 
   return Math.floor( Math.random() * (b - a + 1)) + a; 
 };
 
+/* 배열 셔플 함수 */
 export function shuffle(a){
   for(let i = a.length - 1; i > 0; i--){
     const j = Math.floor(Math.random() * (i + 1));
@@ -101,7 +108,15 @@ export function shuffle(a){
   return a;
 };
 
+/* 오버 이벤트 */
 export function overEvent(target){
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches)
   target.addEventListener('mouseover', () => target.classList.add('hover'));
   target.addEventListener('mouseout', () => target.classList.remove('hover'));
+};
+
+/* 모바일 기기 감지 */
+export function isMobile() {
+  return false;
+  // return /Mobi|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
 };

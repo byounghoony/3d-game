@@ -7,10 +7,9 @@ export const bonusStageBtn = document.getElementById('js-bonusStageBtn');
 
 export const bonusStageContainer = document.getElementById('js-bonusStageContainer');
 
-overEvent(bonusStageBtn);
-
 const bonusList = ['heart', 10, 30, 50, 100];
 
+/* 스테이지 종료 및 보너스 스테이지 안내 */
 export function pauseForStage() {
   moveToLane(1);
   setSpawning(false);
@@ -18,14 +17,18 @@ export function pauseForStage() {
   stageEndContainer.classList.add('on');
   stageEndContainer.querySelector('div').querySelectorAll('span')[0].textContent = `${currentStage}단계`;
   stageEndContainer.querySelector('div').querySelectorAll('span')[1].textContent = score;
-}; // 보너스 스테이지
+}; 
 
+/* 보너스 스테이지 시작 */
 function startBonusStage() {
-  stageEndContainer.classList.remove('on');
   bonusStageContainer.classList.add('on');
+  setTimeout(() => {
+    stageEndContainer.classList.remove('on');
+  }, 10);
   createBox();
 };
 
+/* 보너스 상자 생성 */
 function createBox() {
   shuffle(bonusList);
   for (let i = 0; i < bonusList.length; i++) {
@@ -58,6 +61,7 @@ function createBox() {
   };
 };
 
+/* 보너스 상자 열기 */
 function openBox(bonus) {
   bonusStageContainer.classList.add('opened');
   if (bonus === 'heart') {
@@ -77,7 +81,8 @@ function openBox(bonus) {
   }, 3000);
 };
 
+/* 보너스 스테이지 버튼 클릭 시 보너스 스테이지 시작 */
 bonusStageBtn.addEventListener('click', () => {
   playEfSound();
   startBonusStage();
-}); // 보너스 스테이지 시작 버튼
+}); 

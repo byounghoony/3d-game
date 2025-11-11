@@ -1,7 +1,6 @@
 import * as THREE from './three/three.module.js';
-import { bgmBtn, finalScore, gameOverContainer, wrap } from "./main.js";
+import { bgmBtn, gameOverContainer, wrap } from "./main.js";
 import { animalModel, createTollGate, doors, mixer } from "./model.js";
-// import { pauseForRoulette, rouletteGroup, rouletteSpinSpeed } from "./roulette.js";
 import { camera, centerLoad, renderer, scene, backgroundScene, backgroundCamera } from "./scene.js";
 import { renderLives, scoreVal, stageDefs, updateStageLabel } from "./ui.js";
 import { currentStage, isEndGame, laneIndex, lives, moveToLane, questionNumber, score, spawning, addScore, decreaseLives, resetGameStatus, setSpawning, setIsEndGame, incrementQuestionNumber, shuffle, setLastSpawnTime, getLastSpawnTime, spawnInterval, playEfSound } from "./utils.js";
@@ -10,6 +9,7 @@ import { pauseForStage } from './bonusStage.js';
 export const clock = new THREE.Clock();
 const gameoverText = document.getElementById('js-gameoverText');
 
+/* 문(톨게이트) 생성 함수 */
 export function spawnDoors() {
   setLastSpawnTime(Date.now());
   // 스테이지 전환 로직은 checkDoors에서 처리
@@ -68,6 +68,7 @@ const bgMaterial2 = new THREE.MeshBasicMaterial({
 const bgMesh2 = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), bgMaterial2);
 backgroundScene.add(bgMesh2);
 
+/* 게임 진행 체크 함수 */
 export async function checkDoors(delta){
   aniIndex++;
   if (aniIndex % 2 === 0) {
@@ -140,6 +141,7 @@ export async function checkDoors(delta){
   time += delta;
 };
 
+/* 게임 시작 함수 */
 export function startGame() {
   setIsEndGame(false);
   setSpawning(true);
@@ -149,6 +151,7 @@ export function startGame() {
   wrap.classList.add('startGame');
 };
 
+/* 게임 리셋 함수 */
 export function resetGame(){
   if (doors[0] && doors[0].parentGroup && doors[0].parentGroup.parent) scene.remove(doors[0].parentGroup);
   gameOverContainer.classList.remove('winGame');
@@ -161,6 +164,7 @@ export function resetGame(){
   updateStageLabel();
 };
 
+/* 게임 종료 함수 */
 export function endGame(win){
   bgmBtn.off();
   if (doors[0] && doors[0].parentGroup && doors[0].parentGroup.parent) scene.remove(doors[0].parentGroup);
@@ -172,6 +176,7 @@ export function endGame(win){
   gameoverText.querySelectorAll('span')[1].textContent = score;
 };
 
+/* 게임 승리 및 패배 애니메이션 */
 function winGame(){
   playEfSound('win');
   gameOverContainer.classList.add('winGame');
@@ -188,6 +193,7 @@ function loseGame(){
   }, 2500);
 };
 
+/* 애니메이션 루프 */
 export function animate(){
   requestAnimationFrame(animate);
   const delta = clock.getDelta();

@@ -1,40 +1,44 @@
+import { bonusStageBtn } from "./bonusStage.js";
 import { resetGame, startGame } from "./game.js";
 import { renderer } from "./scene.js";
-import { overEvent, spawning, setSpawning, getLastSpawnTime, setRemainingTime, getRemainingTime, spawnInterval, setLastSpawnTime, bgmSound, playEfSound } from "./utils.js";
+import { overEvent, spawning, setSpawning, getLastSpawnTime, setRemainingTime, getRemainingTime, spawnInterval, setLastSpawnTime, bgmSound, playEfSound, imagePath, isMobile } from "./utils.js";
 
+// wrap
 export const wrap = document.getElementById('app');
-
-// 기본 UI 요소
+// boot
 export const bootContainer = document.getElementById('js-bootContainer');
 export const bootLogo = document.getElementById('js-bootLogo');
-
+// loading
 export const loadingContainer = document.getElementById('js-loadingContainer');
-
+// intro
 export const mainContainer = document.getElementById('js-mainContainer');
 export const startBtn = document.getElementById('js-startBtn');
 export const howBtn = document.getElementById('js-howBtn');
 export const closeHowBtn = document.getElementById('js-closeHowBtn');
+// main game
 export const playBtn = document.getElementById('js-playBtn');
 export const bgmBtn = document.getElementById('js-bgmBtn');
-
+// gameover
 export const gameOverContainer = document.getElementById('js-gameOverContainer');
 export const finalScore = document.getElementById('js-finalScore');
 export const retryBtn = document.getElementById('js-restartBtn');
 
-overEvent(startBtn);
-overEvent(howBtn);
-overEvent(closeHowBtn);
-overEvent(retryBtn);
+isMobile() && wrap.classList.add('isMobile');
 
+// 버튼 호버 이펙트
+const overEventList = [startBtn, howBtn, closeHowBtn, retryBtn, bonusStageBtn];
+overEventList.forEach(btn => overEvent(btn));
+
+/* 이미지 선로딩 */
 const imagesToPreload = [
-  './images/bonus_bg.png',
-  './images/startBtn_hover.png',
-  './images/howBtn_hover.png',
-  './images/close_hover.png',
-  './images/resetBtn_hover.png',
-  './images/left_hover.png',
-  './images/right_hover.png',
-  './images/boxBtn_hover.png',
+  `${imagePath}bonus_bg.png`,
+  `${imagePath}startBtn_hover.png`,
+  `${imagePath}howBtn_hover.png`,
+  `${imagePath}close_hover.png`,
+  `${imagePath}resetBtn_hover.png`,
+  `${imagePath}left_hover.png`,
+  `${imagePath}right_hover.png`,
+  `${imagePath}boxBtn_hover.png`,
 ];
 
 imagesToPreload.forEach(src => {
@@ -47,11 +51,12 @@ bootLogo.addEventListener('animationend', () => {
   bootContainer.classList.add('aniStart');
   loadingContainer.classList.add('aniStart');
 });
-
+/* 로딩 애니메이션 후 인트로 전환 */
 loadingContainer.querySelector('#js-loadingAni').addEventListener('animationend', () => {
   mainContainer.classList.add('aniStart');
 });
 
+/* 인트로에서 시작 버튼 클릭 시 게임 시작 */
 startBtn.addEventListener('click', () =>{
   if(!spawning){
     if (!bgmBtn.hasAttribute('data-bg')) {
@@ -68,12 +73,7 @@ startBtn.addEventListener('click', () =>{
   };
 });
 
-retryBtn.addEventListener('click', () =>{
-  playEfSound();
-  wrap.classList.remove('startGame');
-  resetGame();
-});
-
+/* 인트로에서 게임 방법 버튼 클릭 시 게임 방법창 표시 */
 howBtn.addEventListener('click', () => {
   playEfSound();
   wrap.classList.add('showHow');
@@ -83,18 +83,25 @@ closeHowBtn.addEventListener('click', () => {
   wrap.classList.remove('showHow');
 });
 
+/* 게임오버에서 재시작 버튼 클릭 시 게임 리셋 */
+retryBtn.addEventListener('click', () =>{
+  playEfSound();
+  wrap.classList.remove('startGame');
+  resetGame();
+});
+
+
+/* BGM 버튼 토글 */
 bgmBtn.on = () => {
   bgmBtn.classList.remove('off');
   bgmSound.play();
   bgmBtn.removeAttribute('data-bg');
 };
-
 bgmBtn.off = (set) => {
   bgmBtn.classList.add('off');
   bgmSound.pause();
   if (set) bgmBtn.setAttribute('data-bg', false);
 };
-
 bgmBtn.addEventListener('click', () => {
   if (bgmBtn.classList.contains('off')) bgmBtn.on();
   else bgmBtn.off(true);

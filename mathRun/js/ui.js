@@ -1,11 +1,13 @@
 import { currentStage, laneIndex, lives, moveToLane, r } from "./utils.js";
 
+/* UI 관련 요소들 */
 export const leftBtn = document.getElementById('js-leftBtn');
 export const rightBtn = document.getElementById('js-rightBtn');
 export const scoreVal = document.getElementById('js-scoreVal');
 export const livesEl = document.getElementById('js-lives').querySelectorAll('span');
 export const stageLabel = document.getElementById('js-stageLabel');
 
+/* 좌우 이동 버튼 이벤트 */
 leftBtn.addEventListener('click', () => moveToLane(laneIndex - 1, true));
 rightBtn.addEventListener('click', () => moveToLane(laneIndex + 1, true));
 leftBtn.addEventListener('mousedown', () => leftBtn.classList.add('hover'));
@@ -38,6 +40,7 @@ window.addEventListener('keyup', e => {
   if(e.key === 'ArrowRight') rightBtn.classList.remove('hover');
 });
 
+/* 단계별 문제 정의 */
 export const stageDefs = [
   { label:'한 자리 수 덧셈', gen:()=>{ const a = r(1,9), b = r(1, 9); return { q:`${a}+${b}`, ans:a+b }; } },
   { label:'한 자리 수 뺄셈', gen:()=>{ const a = r(1,9), b = r(1, a); return { q:`${a}-${b}`, ans:a-b }; } },
@@ -51,6 +54,7 @@ export const stageDefs = [
   { label:'세 자리 수 ÷ 한 자리 수', gen:()=>{ const b = r(2, 9), a = b * r(10, 99); return { q:`${a}÷${b}`, ans:a/b }; } },
 ];
 
+/* 목숨 표시 업데이트 */
 export function renderLives(){
   livesEl.forEach((span, idx) => {
     span.classList.remove('off');
@@ -58,8 +62,9 @@ export function renderLives(){
   });
 };
 
+/* 단계 표시 업데이트 */
 export function updateStageLabel(){
   const stageLabelSpan = stageLabel.querySelectorAll('span');
   stageLabelSpan[0].textContent = currentStage + '단계';
-  stageLabelSpan[1].textContent = stageDefs[currentStage-1].label;
+  stageLabelSpan[1].textContent = stageDefs[currentStage - 1].label;
 };
